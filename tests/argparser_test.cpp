@@ -5,10 +5,6 @@
 
 using namespace ArgumentParser;
 
-/*
-    Функция принимает в качество аргумента строку, разделяет ее по "пробелу"
-    и возвращает вектор полученных слов
-*/
 std::vector<std::string> SplitString(const std::string& str) {
     std::istringstream iss(str);
 
@@ -154,6 +150,30 @@ TEST(ArgParserTestSuite, HelpTest) {
 }
 
 
+TEST(ArgParserTestSuite, NegativePositional) {
+    ArgParser parser("My Parser");
+    std::vector<int> values;
+    parser.AddIntArgument("Param1").MultiValue(1).Positional().StoreValues(values);
+
+    ASSERT_TRUE(parser.Parse(SplitString("app -1 -2 -3 -4 -5")));
+    ASSERT_EQ(values[0], -1);
+    ASSERT_EQ(values[2], -3);
+    ASSERT_EQ(values.size(), 5);
+}
+
+
+TEST(ArgParserTestSuite, MyOwnFileTest) {
+    ArgParser parser("My Parser");
+    std::vector<int> values;
+    parser.AddStringArgument("file").Positional();
+    parser.AddStringArgument("input");
+
+    ASSERT_TRUE(parser.Parse(SplitString("app --input=io.txt picture.png")));
+    ASSERT_EQ(parser.GetStringValue("file"), "picture.png");
+    ASSERT_EQ(parser.GetStringValue("input"), "io.txt");
+}
+
+
 TEST(ArgParserTestSuite, HelpStringTest) {
     ArgParser parser("My Parser");
     parser.AddHelp('h', "help", "Some Description about program");
@@ -164,8 +184,6 @@ TEST(ArgParserTestSuite, HelpStringTest) {
 
 
     ASSERT_TRUE(parser.Parse(SplitString("app --help")));
-    // Проверка закоментирована намеренно. Ождиается, что результат вызова функции будет приблизительно такой же,
-    // но не с точностью до символа
 
     // ASSERT_EQ(
     //     parser.HelpDescription(),
@@ -180,3 +198,4 @@ TEST(ArgParserTestSuite, HelpStringTest) {
     //     "-h, --help Display this help and exit\n"
     // );
 }
+
