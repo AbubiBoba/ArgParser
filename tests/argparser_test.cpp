@@ -174,6 +174,16 @@ TEST(ArgParserTestSuite, MyOwnFileTest) {
 }
 
 
+TEST(ArgParserTestSuite, DefaultFlagTest) {
+    ArgParser parser("My Parser");
+    
+    parser.AddFlag('f', "flag");
+
+    ASSERT_TRUE(parser.Parse(SplitString("app")));
+    ASSERT_EQ(parser.GetFlag("flag"), false);
+}
+
+
 TEST(ArgParserTestSuite, HelpStringTest) {
     ArgParser parser("My Parser");
     parser.AddHelp('h', "help", "Some Description about program");
