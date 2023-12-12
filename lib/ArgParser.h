@@ -13,6 +13,9 @@ public:
     ~ArgData() {
         DeleteStorage();
     }
+    ArgData() {
+        storage.single = nullptr;
+    }
     void DeleteStorage() {
         if (is_master) {
             if (is_multivalue) {
@@ -39,17 +42,17 @@ public:
     T default_value{};
 
     bool is_master = true;
-    union Storage { T* single; std::vector<T>* multi; } storage = nullptr;
+    union Storage { T* single; std::vector<T>* multi; } storage;
 };
 
 template<typename T> class ArgBuilder {
 public:
-    ~ArgBuilder<T>() {
+    ~ArgBuilder() {
         delete product;
     }
     ArgBuilder<T>& operator=(const ArgBuilder<T>& other) = delete;
-    ArgBuilder<T>(const ArgBuilder<T>& other) = delete;
-    ArgBuilder<T>(const std::string& fullname, const std::string& description, bool has_param, char nickname = ' ') {
+    ArgBuilder(const ArgBuilder<T>& other) = delete;
+    ArgBuilder(const std::string& fullname, const std::string& description, bool has_param, char nickname = ' ') {
         product = new ArgData<T>;
         product->fullname = fullname;
         product->description = description;
