@@ -7,7 +7,7 @@ namespace ArgumentParser {
     // Help
     void ArgParser::AddHelp(char nickname, std::string fullname, std::string description) {
         delete help;
-        help = (new ArgBuilder<std::string>(fullname, description, false, nickname))->Build();
+        help = (new ArgBuilder<bool>(fullname, description, false, nickname))->Build();
     }
 
     bool ArgParser::Help() const {

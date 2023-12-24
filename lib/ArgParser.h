@@ -7,24 +7,10 @@
 
 namespace Builder {
 
-template<typename T>
-struct ArgData {
+class IArgData {
 public:
-    ~ArgData() {
-        DeleteStorage();
-    }
-    ArgData() {
-        storage.single = nullptr;
-    }
-    void DeleteStorage() {
-        if (is_master) {
-            if (is_multivalue) {
-                delete storage.multi;
-            } else {
-                delete storage.single;
-            }
-        }
-    }
+    virtual ~IArgData() {}
+
     bool has_nickname = false;
     std::string fullname = "";
     char nickname = ' ';
@@ -39,15 +25,48 @@ public:
     int min_count = 0;
 
     bool has_default = false;
-    T default_value{};
 
     bool is_master = true;
+
+    virtual size_t GetStorageSize() const = 0;
+};
+
+template<typename T>
+class ArgData : public IArgData {
+public:
+    ~ArgData() override {
+        DeleteStorage();
+    }
+    ArgData() {
+        storage.single = nullptr;
+    }
+    void DeleteStorage() {
+        if (is_master) {
+            if (is_multivalue) {
+                delete storage.multi;
+            } else {
+                delete storage.single;
+            }
+        }
+    }
+    size_t GetStorageSize() const override {
+        return (is_multivalue) ? storage.multi->size() : 1;
+    }
+    
+    T default_value{};
+
     union Storage { T* single; std::vector<T>* multi; } storage;
 };
 
-template<typename T> class ArgBuilder {
+class IBuilder {
 public:
-    ~ArgBuilder() {
+    virtual ~IBuilder() { }
+    [[nodiscard]] virtual IArgData* Build() = 0;
+};
+
+template<typename T> class ArgBuilder : public IBuilder {
+public:
+    ~ArgBuilder() override {
         delete product;
     }
     ArgBuilder<T>& operator=(const ArgBuilder<T>& other) = delete;
@@ -95,7 +114,7 @@ public:
         return *this;
     }
     [[nodiscard]]
-    ArgData<T>* Build() {
+    ArgData<T>* Build() override {
         ArgData<T>* to_return = product;
         Reset();
         return to_return;
@@ -122,6 +141,8 @@ enum class ParseStatus {
     kInvalidArguments
 };
 
+
+
 class ArgParser {
 public:
     ArgParser(const std::string& id);
@@ -134,13 +155,13 @@ public:
     void BuildAll();
     template<typename T>
     bool Validate(const std::map<std::string, ArgData<T>*>& map_argdata) {
-        for (const auto& pair_argname_argdata : map_argdata) {
-            const ArgData<T>& data = *(pair_argname_argdata.second);
+        for (const auto& [argname, argdata_ptr] : map_argdata) {
+            const ArgData<T>& data = *(argdata_ptr);
             if (!data.has_default && !data.was_parsed) {
                 log = "Argument " + data.fullname + " wasn`t parsed";
                 return false;
             }
-            if (data.is_multivalue && data.storage.multi->size() < data.min_count) {
+            if (data.is_multivalue && data.GetStorageSize() < data.min_count) {
                 log = "Argument " + data.fullname + " has less parametrs then expected";
                 return false;
             }
@@ -185,7 +206,7 @@ private:
     bool is_valid = true;
     std::string log = "Log is empty";
 
-    ArgData<std::string>* help = nullptr;
+    ArgData<bool>* help = nullptr;
 
     std::vector<ArgBuilder<int>*> int_builders;
     std::map<std::string, ArgData<int>*> int_data;
