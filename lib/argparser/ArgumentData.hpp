@@ -8,7 +8,8 @@ namespace ArgumentData {
 enum class ParseStatus {
     kParsedSuccessfully,
     kNotParsed,
-    kInvalidArguments
+    kInvalidArguments,
+    kPartlyParsed
 };
 
 class ArgData {
@@ -40,7 +41,9 @@ public:
 template<typename T>
 class Argument : public ArgData {
 public:
+
     virtual ParseStatus Parse(const std::vector<std::string>& argv, int& iterator) override = 0;
+
     virtual ~Argument() override {
         DeleteStorage();
     }
@@ -60,13 +63,13 @@ public:
         return (is_multivalue) ? storage.multi->size() : 1;
     }
     virtual bool IsValid() const override {
-        if (!has_default && !was_parsed) {
-            return false;
-        }
-        if (is_multivalue && storage.multi->size() < min_count) {
-            return false;
-        }
-        return true;
+        return CheckNoDefault() && CheckMinCount();
+    }
+    bool CheckNoDefault() const {
+        return has_default || was_parsed;
+    }
+    bool CheckMinCount() const {
+        return !is_multivalue || storage.multi->size() >= min_count;
     }
     
 
