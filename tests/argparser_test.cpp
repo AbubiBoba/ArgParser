@@ -149,10 +149,10 @@ TEST(ArgParserTestSuite, FlagsTest) {
 
 TEST(ArgParserTestSuite, HelpTest) {
     ArgParser parser("My Parser");
-    //parser.AddHelp('h', "help", "Some Description about program");
+    parser.AddHelp('h', "help", "Some Description about program");
 
     ASSERT_TRUE(parser.Parse(SplitString("app --help")));
-    //ASSERT_TRUE(parser.Help());
+    ASSERT_TRUE(parser.Help());
 }
 
 
@@ -193,9 +193,20 @@ TEST(ArgParserTestSuite, DefaultFlagTest) {
 }
 
 
+TEST(ArgParserTestSuite, NoSuchArgTest) {
+    ArgParser parser("My Parser");
+    parser.AddIntArgument("param1");
+
+    ASSERT_TRUE(parser.Parse(SplitString("app --param1=100500")));
+    ASSERT_FALSE(parser.GetValue<double>("param1").has_value());
+    ASSERT_FALSE(parser.GetValue<std::string>("param1").has_value());
+    ASSERT_FALSE(parser.GetValue<int>("NOTparam1").has_value());
+}
+
+
 TEST(ArgParserTestSuite, HelpStringTest) {
     ArgParser parser("My Parser");
-    //parser.AddHelp('h', "help", "Some Description about program");
+    parser.AddHelp('h', "help", "Some Description about program");
     parser.AddStringArgument('i', "input", "File path for input file").MultiValue(1);
     parser.AddFlag('s', "flag1", "Use some logic").Default(true);
     parser.AddFlag('p', "flag2", "Use some logic");

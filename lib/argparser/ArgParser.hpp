@@ -18,8 +18,6 @@ namespace ArgumentParser {
 using namespace Builder;
 using namespace ArgumentData;
 
-
-
 class ArgParser {
 public:
     ArgParser(const std::string& id);
@@ -30,18 +28,15 @@ public:
     bool Parse(int argc, char** argv);
     bool Parse(std::vector<std::string> argv);
 
-    void Build();
-    bool IsValid() const;
-
     template<class ArgT, typename T>
         requires(std::is_base_of<Argument<T>, ArgT>::value)
-    ArgBuilder<ArgT, T>& AddArgument(const std::string& fullname, const std::string& description = "", bool take_param = true) {
+    ArgBuilder<ArgT, T>& AddArgument(const std::string& fullname, bool take_param, const std::string& description = "") {
         ArgBuilder<ArgT, T>* builder = new ArgBuilder<ArgT, T>(fullname, description, take_param);
         return PushBuilder(builder);
     }
     template<class ArgT, typename T>
         requires(std::is_base_of<Argument<T>, ArgT>::value)
-    ArgBuilder<ArgT, T>& AddArgument(char nickname, const std::string& fullname, const std::string& description = "", bool take_param = true) {
+    ArgBuilder<ArgT, T>& AddArgument(char nickname, const std::string& fullname, bool take_param, const std::string& description = "") {
         return AddArgument<ArgT, T>(fullname, description, take_param).AddNickname(nickname);
     }
 
@@ -80,15 +75,20 @@ public:
     }
 
     // Built-in types
-    ArgBuilder<IntArgument::IntArg, int>& AddIntArgument(const std::string& fullname, const std::string& description = "") { return AddArgument<IntArgument::IntArg, int>(fullname, description, true); }
-    ArgBuilder<IntArgument::IntArg, int>& AddIntArgument(char nickname, const std::string& fullname, const std::string& description = "") { return AddIntArgument(fullname, description).AddNickname(nickname); }
-    ArgBuilder<StringArgument::StringArg, std::string>& AddStringArgument(const std::string& fullname, const std::string& description = "") { return AddArgument<StringArgument::StringArg, std::string>(fullname, description, true); }
-    ArgBuilder<StringArgument::StringArg, std::string>& AddStringArgument(char nickname, const std::string& fullname, const std::string& description = "") { return AddStringArgument(fullname, description).AddNickname(nickname); }
-    ArgBuilder<BoolArgument::BoolArg, bool>& AddFlag(const std::string& fullname, const std::string& description = "") { return AddArgument<BoolArgument::BoolArg, bool>(fullname, description).Default(false); }
-    ArgBuilder<BoolArgument::BoolArg, bool>& AddFlag(char nickname, const std::string& fullname, const std::string& description = "") { return AddFlag(fullname, description).AddNickname(nickname); }
+    ArgBuilder<IntArgument::IntArg, int>& AddIntArgument(const std::string& fullname, const std::string& description = "");
+    ArgBuilder<IntArgument::IntArg, int>& AddIntArgument(char nickname, const std::string& fullname, const std::string& description = "");
+    ArgBuilder<StringArgument::StringArg, std::string>& AddStringArgument(const std::string& fullname, const std::string& description = "");
+    ArgBuilder<StringArgument::StringArg, std::string>& AddStringArgument(char nickname, const std::string& fullname, const std::string& description = "");
+    ArgBuilder<BoolArgument::BoolArg, bool>& AddFlag(const std::string& fullname, const std::string& description = "");
+    ArgBuilder<BoolArgument::BoolArg, bool>& AddFlag(char nickname, const std::string& fullname, const std::string& description = "");
+    void AddHelp(char nickname, const std::string& fullname, const std::string& description = "");
+    std::string HelpDescription() const;
+    bool Help() const;
 
 private:
 
+    void Build();
+    bool IsValid() const;
     template<typename T>
     Argument<T>* GetArgument(const std::string& name) {
         auto iterator = arg_data.find(name);
@@ -99,7 +99,14 @@ private:
         return p_arg;
     }
 
+    const char kShortArgPrefix = '-';
+    const std::string kLongArgPrefix = "--";
+    std::string endline = "\n";
+
     std::string name = "";
+    bool asked_for_help = false;
+    BoolArgument::BoolArg* help = nullptr;
+
     std::map<std::string, ArgData*> arg_data;
     std::vector<ArgData*> positional;
     std::vector<IBuilder*> builders;
