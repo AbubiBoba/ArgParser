@@ -38,14 +38,15 @@ bool ArgParser::Parse(const std::vector<std::string_view>& argv) {
 
         if (argv[iterator].starts_with(kLongArgPrefix)) {
             std::string_view arg_name = argv[iterator].substr(kLongArgPrefix.length());
-            std::string_view arg_value = "";
+            std::string_view arg_value;
             bool is_valid = true;
-            if (arg_name.find('=') == std::string_view::npos) {
+            size_t equal_sign_pos = arg_name.find('=');
+            if (equal_sign_pos == std::string_view::npos) {
                 is_valid = iterator + 1 < argv.size();
                 arg_value = is_valid ? argv[++iterator] : std::string_view{};
             } else {
-                arg_value = arg_name.substr(arg_name.find('=') + 1);
-                arg_name = arg_name.substr(0, arg_name.find('='));
+                arg_value = arg_name.substr(equal_sign_pos + 1);
+                arg_name = arg_name.substr(0, equal_sign_pos);
                 is_valid = arg_name.size();
             }
 
@@ -138,6 +139,13 @@ bool ArgParser::IsValid() const {
 
 ArgParser::ArgParser(const std::string& name) {
     this->name = name;
+}
+
+void ArgParser::PushArgument(ArgData* arg_ptr) {
+    args_data[arg_ptr->fullname] = arg_ptr;
+    if (arg_ptr->is_positional) {
+        positional.push_back(arg_ptr);
+    }
 }
 
 // Built-in types

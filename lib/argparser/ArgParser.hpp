@@ -11,6 +11,7 @@
 #include <optional>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <vector>
 
@@ -43,20 +44,13 @@ public:
     }
 
     template<class TBuilder>
-        requires(std::is_base_of<IBuilder, TBuilder>::value)
+        requires(std::is_base_of_v<IBuilder, TBuilder>)
     TBuilder& PushBuilder(TBuilder* builder) {
         builders.push_back(builder);
         return *builder;
     }
 
-    template<class TArgData>
-        requires(std::is_base_of<ArgData, TArgData>::value)
-    void PushArgument(TArgData* arg_ptr) {
-        args_data[arg_ptr->fullname] = arg_ptr;
-        if (arg_ptr->is_positional) {
-            positional.push_back(arg_ptr);
-        }
-    }
+    void PushArgument(ArgData* arg_ptr);
 
     template<typename T>
     std::optional<T> GetValue(const std::string& name) {
