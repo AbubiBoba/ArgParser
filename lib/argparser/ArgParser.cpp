@@ -6,7 +6,7 @@ void ArgParser::Build() {
     for (auto ptr : builders) {
         const std::string& name = ptr->GetArgumentName();
         ArgData* arg_ptr = ptr->Build();
-        arg_data[name] = arg_ptr;
+        args_data[name] = arg_ptr;
         if (arg_ptr->is_positional) {
             positional.push_back(arg_ptr);
         }
@@ -17,7 +17,7 @@ ArgParser::~ArgParser() {
     for (auto ptr : builders) {
         delete ptr;
     }
-    for (auto ptr : arg_data) {
+    for (auto ptr : args_data) {
         delete ptr.second;
     }
 }
@@ -26,69 +26,106 @@ bool ArgParser::Parse(int argc, char** argv) {
 	return Parse(std::vector<std::string>(argv, argv + argc));
 }
 
-bool ArgParser::Parse(std::vector<std::string> argv) {
-
+bool ArgParser::Parse(const std::vector<std::string>& argv) {
     Build();
-    std::vector<bool> not_parsed(argv.size());
 
     for (int iterator = 1; iterator < argv.size(); ++iterator) {
-        bool was_parsed = false;
-        for (auto& [name, arg] : arg_data) {
-            if (arg->is_positional) {
-                continue;
-            }
-            ParseStatus parse_status = arg->Parse(argv, iterator);
-                
-            if (parse_status == ParseStatus::kInvalidArguments) {
-                return false;
-            }
-            if (parse_status == ParseStatus::kParsedSuccessfully) {
-                was_parsed = true;
-                break;
-            }
-            if (parse_status == ParseStatus::kPartlyParsed) {
-                was_parsed = true;
-            }
-        }
-        if (!was_parsed) {
-            not_parsed[iterator] = true;
-        }
-    }
+        bool parsed = false;
 
-    for (int iterator = 1; iterator < argv.size(); ++iterator) {
-        if (!not_parsed[iterator]) {
+        if (argv[iterator].starts_with(kLongArgPrefix)) {
+            std::string_view arg_name = { argv[iterator].begin() + kLongArgPrefix.length(), argv[iterator].end()};
+            std::string_view arg_value = "";
+            bool is_valid = true;
+            if (arg_name.find('=') == std::string_view::npos) {
+                is_valid = iterator + 1 < argv.size();
+                arg_value = is_valid ? argv[++iterator] : std::string_view{};
+            } else {
+                arg_value = { arg_name.begin() + arg_name.find('=') + 1, arg_name.end() };
+                arg_name = { arg_name.begin(), arg_name.begin() + arg_name.find('=') };
+                is_valid = arg_name.size();
+            }
+
+            if (ArgData* argdata_ptr = GetArgData(arg_name)) {
+                if (argdata_ptr->has_param && is_valid && argdata_ptr->ParseAndSave(arg_value) == ParseStatus::kParsedSuccessfully) {
+                    parsed = true;
+                    continue;
+                }
+                if (!argdata_ptr->has_param && argdata_ptr->ParseAndSave("") == ParseStatus::kParsedSuccessfully) {
+                    parsed = true;
+                    continue;
+                }
+            }
+            return false;
+        } else if(argv[iterator].starts_with(kShortArgPrefix)) {
+            for (int i = 1; i < argv[iterator].size(); ++i) {
+                char arg = argv[iterator][i];
+                parsed = false;
+
+                auto find_argdata_by_nickname = [](char nickname, std::map<std::string, ArgData*>& args_data) {
+                    for (auto& [name, args_data] : args_data) {
+                        if (args_data->has_nickname && args_data->nickname == nickname) {
+                            return args_data;
+                        }
+                    }
+                    return (ArgData*) nullptr;
+                };
+
+                ArgData* argdata = find_argdata_by_nickname(arg, args_data);
+                if (!argdata) {
+                    break;
+                } else if (argdata->has_param) {
+                    if (i + 1 < argv[iterator].size() && argv[iterator][i + 1] != '=') {
+                        return false;
+                    }
+                    if (i + 1 < argv[iterator].size() && argv[iterator][i + 1] == '=') {
+                        std::string_view arg_value = { argv[iterator].begin() + argv[iterator].find('=') + 1, argv[iterator].end() };
+                        if (argdata->ParseAndSave(arg_value) != ParseStatus::kParsedSuccessfully) {
+                            return false;
+                        }
+                    } else if (iterator + 1 >= argv.size() || argdata->ParseAndSave(argv[++iterator]) != ParseStatus::kParsedSuccessfully) {
+                        return false;
+                    }
+                    parsed = true;
+                    break;
+                } else if (argdata->ParseAndSave("") == ParseStatus::kParsedSuccessfully) {
+                    parsed = true;
+                    continue;
+                } else {
+                    return false;
+                }
+            }
+        } 
+        if (parsed) {
             continue;
         }
-        bool was_parsed = false;
-        for (auto& [name, arg] : arg_data) {
-            if (!arg->is_positional) {
-                continue;
-            }
-            ParseStatus parse_status = arg->Parse(argv, iterator);
-
-            if (parse_status == ParseStatus::kInvalidArguments) {
-                return false;
-            }
-            if (parse_status == ParseStatus::kParsedSuccessfully) {
-                was_parsed = true;
+        for (ArgData* argdata_ptr : positional) {
+            if (argdata_ptr->ParseAndSave(argv[iterator]) == ParseStatus::kParsedSuccessfully) {
+                parsed = true;
                 break;
             }
         }
-        if (was_parsed) {
-            not_parsed[iterator] = false;
-        }
-    }
-    for (int iterator = 1; iterator < argv.size(); ++iterator) {
-        if (not_parsed[iterator]) {
+        if (!parsed) {
             return false;
         }
     }
-		
-    return IsValid() || asked_for_help;
+    
+    return asked_for_help || IsValid();
+}
+
+ArgData* ArgParser::GetArgData(const std::string& name) {
+    auto iterator = args_data.find(name);
+    if (iterator == args_data.end()) {
+        return nullptr;
+    }
+    return iterator->second;
+}
+
+ArgData* ArgParser::GetArgData(std::string_view name) {
+    return GetArgData(std::string(name));
 }
 
 bool ArgParser::IsValid() const {
-    for (auto& [name, arg] : arg_data) {
+    for (auto& [name, arg] : args_data) {
         if (!arg->IsValid()) {
             return false;
         }
@@ -98,7 +135,6 @@ bool ArgParser::IsValid() const {
 
 ArgParser::ArgParser(const std::string& name) {
     this->name = name;
-
 }
 
 // Built-in types
@@ -143,7 +179,7 @@ std::string ArgParser::HelpDescription() const {
     }
     help_description += endline;
 
-    for (const auto& pair_argname_argdata : arg_data) {
+    for (const auto& pair_argname_argdata : args_data) {
         auto& argdata = *pair_argname_argdata.second;
         help_description += (argdata.has_nickname) ? std::string(1, kShortArgPrefix) + std::string(1, argdata.nickname) + "," : std::string(3, ' ');
         help_description += std::string(2, ' ');

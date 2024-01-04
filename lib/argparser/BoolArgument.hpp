@@ -7,27 +7,25 @@ using namespace ArgumentData;
 
 class BoolArg : public Argument<bool> {
 
-    ParseStatus Parse(const std::vector<std::string>& argv, int& iterator) override {
+    ParseStatus ParseAndSave(std::string_view arg) override {
 
-        const char kShortArgPrefix = '-';
-        const std::string kLongArgPrefix = "--";
+        auto save_value = [](Argument<bool>* data) {
+            data->was_parsed = true;
+            if (data->is_multivalue) {
+                data->storage.multi->push_back(!data->default_value);
+            }
+            else {
+                *(data->storage.single) = !*(data->storage.single);
+            }
+        };
 
-        const std::string& arg = argv[iterator];
-        bool partly_parsed = false;
-
-        if ((has_nickname && (arg == kShortArgPrefix + std::string(1, nickname))) || (arg == kLongArgPrefix + fullname)) {
-            was_parsed = true;
-            *(storage.single) = !*(storage.single);
-            return ParseStatus::kParsedSuccessfully;
+        if (arg.size()) {
+            return ParseStatus::kNotParsed;
         }
 
-        if (has_nickname && arg.starts_with(kShortArgPrefix) && arg.find(nickname) != std::string::npos) {
-            was_parsed = true;
-            *(storage.single) = !*(storage.single);
-            partly_parsed = true;
-        }
+        save_value(this);
 
-        return partly_parsed ? ParseStatus::kPartlyParsed : ParseStatus::kNotParsed;
+        return ParseStatus::kParsedSuccessfully;
     }
 };
 

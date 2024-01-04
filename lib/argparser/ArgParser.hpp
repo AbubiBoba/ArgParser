@@ -26,7 +26,7 @@ public:
     ~ArgParser();
 
     bool Parse(int argc, char** argv);
-    bool Parse(std::vector<std::string> argv);
+    bool Parse(const std::vector<std::string>& argv);
 
     template<class ArgT, typename T>
         requires(std::is_base_of<Argument<T>, ArgT>::value)
@@ -50,7 +50,7 @@ public:
     template<class TArgData>
         requires(std::is_base_of<ArgData, TArgData>::value)
     void PushArgument(TArgData* arg_ptr) {
-        arg_data[arg_ptr->fullname] = arg_ptr;
+        args_data[arg_ptr->fullname] = arg_ptr;
         if (arg_ptr->is_positional) {
             positional.push_back(arg_ptr);
         }
@@ -89,13 +89,15 @@ private:
 
     void Build();
     bool IsValid() const;
+    ArgData* GetArgData(const std::string& name);
+    ArgData* GetArgData(std::string_view name);
     template<typename T>
     Argument<T>* GetArgument(const std::string& name) {
-        auto iterator = arg_data.find(name);
-        if (iterator == arg_data.end()) {
+        auto iterator = args_data.find(name);
+        if (iterator == args_data.end()) {
             return nullptr;
         }
-        Argument<T>* p_arg = dynamic_cast<Argument<T>*>(arg_data[name]);
+        Argument<T>* p_arg = dynamic_cast<Argument<T>*>(args_data[name]);
         return p_arg;
     }
 
@@ -107,7 +109,7 @@ private:
     bool asked_for_help = false;
     BoolArgument::BoolArg* help = nullptr;
 
-    std::map<std::string, ArgData*> arg_data;
+    std::map<std::string, ArgData*> args_data;
     std::vector<ArgData*> positional;
     std::vector<IBuilder*> builders;
 };

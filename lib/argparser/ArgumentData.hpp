@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <charconv>
 
 namespace ArgumentData {
  
@@ -34,7 +35,7 @@ public:
     bool is_master = true;
 
     virtual size_t GetStorageSize() const = 0;
-    virtual ParseStatus Parse(const std::vector<std::string>& argv, int& iterator) = 0;
+    virtual ParseStatus ParseAndSave(std::string_view arg) = 0;
     virtual bool IsValid() const = 0;
 };
 
@@ -42,7 +43,7 @@ template<typename T>
 class Argument : public ArgData {
 public:
 
-    virtual ParseStatus Parse(const std::vector<std::string>& argv, int& iterator) override = 0;
+    virtual ParseStatus ParseAndSave(std::string_view arg) override = 0;
 
     virtual ~Argument() override {
         DeleteStorage();

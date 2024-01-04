@@ -9,11 +9,7 @@ using namespace ArgumentData;
 
 class StringArg : public Argument <std::string> {
 
-    ParseStatus Parse(const std::vector<std::string>& argv, int& iterator) override {
-
-        const char kShortArgPrefix = '-';
-        const std::string kLongArgPrefix = "--";
-        const std::string& arg = argv[iterator];
+    ParseStatus ParseAndSave(std::string_view arg) override {
 
         auto save_value = [](Argument<std::string>* data, std::string value) {
             data->was_parsed = true;
@@ -25,44 +21,9 @@ class StringArg : public Argument <std::string> {
             }
         };
 
-        if (is_positional) {
-            save_value(this, arg);
-            return ParseStatus::kParsedSuccessfully;
-        }
+        save_value(this, std::string(arg));
 
-        bool take_next = false;
-        if (has_nickname && (arg == kShortArgPrefix + std::string(1, nickname))) {
-            take_next = true;
-        }
-        if (arg == kLongArgPrefix + fullname) {
-            take_next = true;
-        }
-
-        if (take_next && iterator + 1 < argv.size()) {
-            save_value(this, argv[++iterator]);
-            return ParseStatus::kParsedSuccessfully;
-        }
-        else if (take_next) {
-            return ParseStatus::kInvalidArguments;
-        }
-
-        std::string prefix = kLongArgPrefix + fullname + "=";
-        if (arg.starts_with(prefix) && arg.size() > prefix.size()) {
-            save_value(this, std::string{ arg.begin() + prefix.size(), arg.end() });
-            return ParseStatus::kParsedSuccessfully;
-        }
-
-        if (!has_nickname) {
-            return ParseStatus::kNotParsed;
-        }
-
-        prefix = std::string(1, kShortArgPrefix) + std::string(1, nickname) + "=";
-        if (arg.starts_with(prefix) && arg.size() > prefix.size()) {
-            save_value(this, std::string{ arg.begin() + prefix.size(), arg.end() });
-            return ParseStatus::kParsedSuccessfully;
-        }
-
-        return ParseStatus::kNotParsed;
+        return ParseStatus::kParsedSuccessfully;
     }
 };
 

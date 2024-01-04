@@ -204,6 +204,26 @@ TEST(ArgParserTestSuite, NoSuchArgTest) {
 }
 
 
+TEST(ArgParserTestSuite, ArchiveSampleTest) {
+    ArgParser parser("My Parser");
+    parser.AddFlag('x', "extract");
+    parser.AddStringArgument('f', "file");
+
+    parser.AddFlag('o', "open");
+    parser.AddStringArgument('a', "archive");
+
+    ASSERT_TRUE(parser.Parse(SplitString("app -xf=io.txt -oa arc.zip")));
+
+    ASSERT_TRUE(parser.GetValue<bool>("extract").value_or(false));
+    ASSERT_TRUE(parser.GetValue<std::string>("file").has_value());
+    ASSERT_EQ(parser.GetValue<std::string>("file").value(), "io.txt");
+    
+    ASSERT_TRUE(parser.GetValue<bool>("open").value_or(false));
+    ASSERT_TRUE(parser.GetValue<std::string>("archive").has_value());
+    ASSERT_EQ(parser.GetValue<std::string>("archive").value(), "arc.zip");
+}
+
+
 TEST(ArgParserTestSuite, HelpStringTest) {
     ArgParser parser("My Parser");
     parser.AddHelp('h', "help", "Some Description about program");
