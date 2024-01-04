@@ -9,8 +9,7 @@ namespace ArgumentData {
 enum class ParseStatus {
     kParsedSuccessfully,
     kNotParsed,
-    kInvalidArguments,
-    kPartlyParsed
+    kInvalidArguments
 };
 
 class ArgData {
@@ -32,11 +31,11 @@ public:
 
     bool has_default = false;
 
-    bool is_master = true;
+    bool is_owned = true;
 
     virtual size_t GetStorageSize() const = 0;
     virtual ParseStatus ParseAndSave(std::string_view arg) = 0;
-    virtual bool IsValid() const = 0;
+    virtual bool Validate() const = 0;
 };
 
 template<typename T>
@@ -48,11 +47,13 @@ public:
     virtual ~Argument() override {
         DeleteStorage();
     }
+
     Argument() {
         storage.single = nullptr;
     }
+
     void DeleteStorage() {
-        if (is_master) {
+        if (is_owned) {
             if (is_multivalue) {
                 delete storage.multi;
             } else {
@@ -60,20 +61,23 @@ public:
             }
         }
     }
+
     size_t GetStorageSize() const override final {
         return (is_multivalue) ? storage.multi->size() : 1;
     }
-    virtual bool IsValid() const override {
+
+    virtual bool Validate() const override {
         return CheckNoDefault() && CheckMinCount();
     }
+
     bool CheckNoDefault() const {
         return has_default || was_parsed;
     }
+
     bool CheckMinCount() const {
         return !is_multivalue || storage.multi->size() >= min_count;
     }
     
-
     T default_value{};
     union Storage { T* single; std::vector<T>* multi; } storage;
 };

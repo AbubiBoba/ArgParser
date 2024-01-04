@@ -23,25 +23,29 @@ ArgParser::~ArgParser() {
 }
 
 bool ArgParser::Parse(int argc, char** argv) {
-	return Parse(std::vector<std::string>(argv, argv + argc));
+	return Parse(std::vector<std::string_view>(argv, argv + argc));
 }
 
 bool ArgParser::Parse(const std::vector<std::string>& argv) {
+    return Parse(std::vector<std::string_view>(argv.begin(), argv.end()));
+}
+
+bool ArgParser::Parse(const std::vector<std::string_view>& argv) {
     Build();
 
     for (int iterator = 1; iterator < argv.size(); ++iterator) {
         bool parsed = false;
 
         if (argv[iterator].starts_with(kLongArgPrefix)) {
-            std::string_view arg_name = { argv[iterator].begin() + kLongArgPrefix.length(), argv[iterator].end()};
+            std::string_view arg_name = argv[iterator].substr(kLongArgPrefix.length());
             std::string_view arg_value = "";
             bool is_valid = true;
             if (arg_name.find('=') == std::string_view::npos) {
                 is_valid = iterator + 1 < argv.size();
                 arg_value = is_valid ? argv[++iterator] : std::string_view{};
             } else {
-                arg_value = { arg_name.begin() + arg_name.find('=') + 1, arg_name.end() };
-                arg_name = { arg_name.begin(), arg_name.begin() + arg_name.find('=') };
+                arg_value = arg_name.substr(arg_name.find('=') + 1);
+                arg_name = arg_name.substr(0, arg_name.find('='));
                 is_valid = arg_name.size();
             }
 
@@ -55,22 +59,21 @@ bool ArgParser::Parse(const std::vector<std::string>& argv) {
                     continue;
                 }
             }
+
             return false;
         } else if(argv[iterator].starts_with(kShortArgPrefix)) {
             for (int i = 1; i < argv[iterator].size(); ++i) {
                 char arg = argv[iterator][i];
                 parsed = false;
 
-                auto find_argdata_by_nickname = [](char nickname, std::map<std::string, ArgData*>& args_data) {
-                    for (auto& [name, args_data] : args_data) {
-                        if (args_data->has_nickname && args_data->nickname == nickname) {
-                            return args_data;
-                        }
+                ArgData* argdata = nullptr;
+                for (auto& [name, args_data] : args_data) {
+                    if (args_data->has_nickname && args_data->nickname == arg) {
+                        argdata = args_data;
+                        break;
                     }
-                    return (ArgData*) nullptr;
-                };
+                }
 
-                ArgData* argdata = find_argdata_by_nickname(arg, args_data);
                 if (!argdata) {
                     break;
                 } else if (argdata->has_param) {
@@ -78,7 +81,7 @@ bool ArgParser::Parse(const std::vector<std::string>& argv) {
                         return false;
                     }
                     if (i + 1 < argv[iterator].size() && argv[iterator][i + 1] == '=') {
-                        std::string_view arg_value = { argv[iterator].begin() + argv[iterator].find('=') + 1, argv[iterator].end() };
+                        std::string_view arg_value = argv[iterator].substr(argv[iterator].find('=') + 1);
                         if (argdata->ParseAndSave(arg_value) != ParseStatus::kParsedSuccessfully) {
                             return false;
                         }
@@ -90,9 +93,9 @@ bool ArgParser::Parse(const std::vector<std::string>& argv) {
                 } else if (argdata->ParseAndSave("") == ParseStatus::kParsedSuccessfully) {
                     parsed = true;
                     continue;
-                } else {
-                    return false;
                 }
+
+                return false;
             }
         } 
         if (parsed) {
@@ -126,7 +129,7 @@ ArgData* ArgParser::GetArgData(std::string_view name) {
 
 bool ArgParser::IsValid() const {
     for (auto& [name, arg] : args_data) {
-        if (!arg->IsValid()) {
+        if (!arg->Validate()) {
             return false;
         }
     }
@@ -172,38 +175,42 @@ bool ArgParser::Help() const {
 
 std::string ArgParser::HelpDescription() const {
 
-    std::string help_description;
-    help_description += name + endline;
+    std::stringstream help_description;
+    help_description << name << endline;
     if (help) {
-        help_description += help->description + endline;
+        help_description << help->description << endline;
     }
-    help_description += endline;
+    help_description << endline;
 
     for (const auto& pair_argname_argdata : args_data) {
         auto& argdata = *pair_argname_argdata.second;
-        help_description += (argdata.has_nickname) ? std::string(1, kShortArgPrefix) + std::string(1, argdata.nickname) + "," : std::string(3, ' ');
-        help_description += std::string(2, ' ');
-        help_description += kLongArgPrefix + argdata.fullname + "=<value>,  ";
-        help_description += argdata.description + " ";
+        if (argdata.has_nickname) {
+            help_description << kShortArgPrefix << argdata.nickname << ',';
+        } else { 
+            help_description << ' ' << ' ' << ' ';
+        }
+        help_description << ' ' << ' ';
+        help_description << kLongArgPrefix << argdata.fullname << "=<value>,  ";
+        help_description << argdata.description << ' ';
         if (argdata.has_default) {
-            help_description += "[default] ";
+            help_description << "[default] ";
         }
         if (argdata.is_multivalue) {
-            help_description += "[repeated, min args = " + std::to_string(argdata.min_count) + "] ";
+            help_description << "[repeated, min args = " << argdata.min_count << "] ";
         }
-        help_description += endline;
+        help_description << endline;
     }
 
-    help_description += endline;
+    help_description << endline;
     if (help) {
-        help_description += std::string(1, kShortArgPrefix) + std::string(1, help->nickname) + ",";
-        help_description += std::string(2, ' ');
-        help_description += kLongArgPrefix + help->fullname + std::string(1, ',') + std::string(2, ' ');
-        help_description += "Display this help and exit";
-        help_description += endline;
+        help_description << kShortArgPrefix << help->nickname << ',';
+        help_description << ' ' << ' ';
+        help_description << kLongArgPrefix << help->fullname << ',' << ' ' << ' ';
+        help_description << "Display this help and exit";
+        help_description << endline;
     }
 
-    return help_description;
+    return help_description.str();
 }
 
 } // namespace ArgumentParser

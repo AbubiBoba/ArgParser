@@ -9,6 +9,7 @@
 #include <iostream>
 #include <map>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -27,6 +28,7 @@ public:
 
     bool Parse(int argc, char** argv);
     bool Parse(const std::vector<std::string>& argv);
+    bool Parse(const std::vector<std::string_view>& argv);
 
     template<class ArgT, typename T>
         requires(std::is_base_of<Argument<T>, ArgT>::value)

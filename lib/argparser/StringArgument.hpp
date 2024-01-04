@@ -11,17 +11,13 @@ class StringArg : public Argument <std::string> {
 
     ParseStatus ParseAndSave(std::string_view arg) override {
 
-        auto save_value = [](Argument<std::string>* data, std::string value) {
-            data->was_parsed = true;
-            if (data->is_multivalue) {
-                data->storage.multi->push_back(value);
-            }
-            else {
-                *(data->storage.single) = value;
-            }
-        };
-
-        save_value(this, std::string(arg));
+        was_parsed = true;
+        if (is_multivalue) {
+            storage.multi->push_back(std::string(arg));
+        }
+        else {
+            *(storage.single) = std::string(arg);
+        }
 
         return ParseStatus::kParsedSuccessfully;
     }
