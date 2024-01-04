@@ -176,11 +176,11 @@ bool ArgParser::Help() const {
 std::string ArgParser::HelpDescription() const {
 
     std::stringstream help_description;
-    help_description << name << endline;
+    help_description << name << std::endl;
     if (help) {
-        help_description << help->description << endline;
+        help_description << help->description << std::endl;
     }
-    help_description << endline;
+    help_description << std::endl;
 
     for (const auto& pair_argname_argdata : args_data) {
         auto& argdata = *pair_argname_argdata.second;
@@ -198,16 +198,16 @@ std::string ArgParser::HelpDescription() const {
         if (argdata.is_multivalue) {
             help_description << "[repeated, min args = " << argdata.min_count << "] ";
         }
-        help_description << endline;
+        help_description << std::endl;
     }
 
-    help_description << endline;
+    help_description << std::endl;
     if (help) {
         help_description << kShortArgPrefix << help->nickname << ',';
         help_description << ' ' << ' ';
         help_description << kLongArgPrefix << help->fullname << ',' << ' ' << ' ';
         help_description << "Display this help and exit";
-        help_description << endline;
+        help_description << std::endl;
     }
 
     return help_description.str();

@@ -105,7 +105,6 @@ private:
 
     const char kShortArgPrefix = '-';
     const std::string kLongArgPrefix = "--";
-    std::string endline = "\n";
 
     std::string name = "";
     bool asked_for_help = false;
