@@ -263,3 +263,123 @@ TEST(ArgParserTestSuite, HelpStringTest) {
     //     "-h, --help Display this help and exit\n"
     // );
 }
+
+
+TEST(ExternalInteractionsArgParserTestSuite, ExterlnalDoubleArgTest) {
+    using namespace ArgumentData;
+    using namespace Builder;
+
+    class DoubleArg : public Argument<double> {
+    public:
+
+        virtual ParseStatus ParseAndSave(std::string_view arg) override {
+            std::stringstream ss;
+            ss << arg;
+            double value;
+            ss >> value;
+            if (ss.eof()) {
+                was_parsed = true;
+                if (is_multivalue) {
+                    storage.multi->push_back(value);
+                }
+                else {
+                    *storage.single = value;
+                }
+                return ParseStatus::kParsedSuccessfully;
+            }
+            return ParseStatus::kNotParsed;
+        }
+
+    };
+
+    ArgumentParser::ArgParser parser("Program");
+
+    parser.AddArgument<DoubleArg, double>("billion", true);
+    parser.AddArgument<DoubleArg, double>("pi", true);
+    parser.AddArgument<DoubleArg, double>("e", true);
+
+    ASSERT_TRUE(parser.Parse(SplitString("app --billion=1e9 --e=2.71 --pi 3.14")));
+
+    ASSERT_EQ(parser.GetValue<double>("billion").value_or(0.0), 1e9);
+    ASSERT_EQ(parser.GetValue<double>("e").value_or(0.0), 2.71);
+    ASSERT_EQ(parser.GetValue<double>("pi").value_or(0.0), 3.14);
+}
+
+
+TEST(ExternalInteractionsArgParserTestSuite, CustomBuilderTest) {
+    using namespace ArgumentData;
+    using namespace Builder;
+
+    class SizedString {
+    public:
+        std::string value;
+        size_t threshold = 1;
+    };
+
+    class CustomArg : public Argument<SizedString> {
+    public:
+
+        virtual ParseStatus ParseAndSave(std::string_view arg) override {
+            if (arg.size() > storage.single->threshold) {
+                return ParseStatus::kNotParsed;
+            }
+            was_parsed = true;
+            storage.single->value = arg;
+            return ParseStatus::kParsedSuccessfully;
+        }
+
+    };
+
+    class CustomBuilder : public IBuilder {
+    public:
+        ~CustomBuilder() override {
+            delete product;
+        }
+
+        CustomBuilder(const std::string& fullname) {
+            Reset();
+            product->fullname = fullname;
+            product->has_param = true;
+            product->storage.single = new SizedString;
+        }
+
+        CustomBuilder& SetThreshold(size_t threshold) {
+            product->storage.single->threshold = threshold;
+            return *this;
+        }
+
+        [[nodiscard]]
+        ArgData* Build() override {
+            ArgData* to_return = product;
+            Reset();
+            return to_return;
+        }
+
+        virtual const std::string& GetArgumentName() const override {
+            return product->fullname;
+        }
+    private:
+        CustomArg* product = nullptr;
+
+        void Reset() {
+            product = new CustomArg{};
+        }
+    };
+
+    ArgumentParser::ArgParser parser1("V1");
+    ArgumentParser::ArgParser parser2("V2");
+
+    /*  Variant I  */
+    CustomBuilder builder("arg");
+    builder.SetThreshold(5);
+    parser1.PushArgument(builder.Build());
+    ASSERT_TRUE(parser1.Parse(SplitString("app --arg=world")));
+    ASSERT_TRUE(parser1.GetValue<SizedString>("arg").has_value());
+    ASSERT_EQ(parser1.GetValue<SizedString>("arg").value().value, "world");
+
+    /*  Variant II  */
+     parser2.PushBuilder(new CustomBuilder("arg")).SetThreshold(5);
+    ASSERT_TRUE(parser2.Parse(SplitString("app --arg=world")));
+    ASSERT_TRUE(parser2.GetValue<SizedString>("arg").has_value());
+    ASSERT_EQ(parser2.GetValue<SizedString>("arg").value().value, "world");
+}
