@@ -2,12 +2,12 @@
 
 #include <string>
 
-namespace StringArgument {
+namespace ArgumentParser {
 
 using namespace Builder;
 using namespace ArgumentData;
 
-class StringArg : public Argument <std::string> {
+class StringArg final : public Argument <std::string> {
 
     ParseStatus ParseAndSave(std::string_view arg) override {
 

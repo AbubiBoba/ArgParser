@@ -1,11 +1,11 @@
 #pragma once
 
-namespace BoolArgument {
+namespace ArgumentParser {
 
 using namespace Builder;
 using namespace ArgumentData;
 
-class BoolArg : public Argument<bool> {
+class BoolArg final : public Argument<bool> {
 
     ParseStatus ParseAndSave(std::string_view arg) override {
 

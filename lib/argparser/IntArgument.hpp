@@ -2,12 +2,12 @@
 
 #include <sstream>
 
-namespace IntArgument {
+namespace ArgumentParser {
 
 using namespace Builder;
 using namespace ArgumentData;
 
-class IntArg : public Argument<int> {
+class IntArg final : public Argument<int> {
 
     ParseStatus ParseAndSave(std::string_view arg) override {
         std::stringstream ss;

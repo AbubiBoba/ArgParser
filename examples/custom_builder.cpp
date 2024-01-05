@@ -29,7 +29,7 @@ public:
 
 };
 
-class CustomBuilder : public IBuilder {
+class CustomBuilder : public IArgumentBuilder {
 public:
     ~CustomBuilder() override {
         delete product;

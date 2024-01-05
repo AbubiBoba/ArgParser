@@ -116,16 +116,12 @@ bool ArgParser::Parse(const std::vector<std::string_view>& argv) {
     return asked_for_help || IsValid();
 }
 
-ArgData* ArgParser::GetArgData(const std::string& name) {
+ArgData* ArgParser::GetArgData(std::string_view name) {
     auto iterator = args_data.find(name);
     if (iterator == args_data.end()) {
         return nullptr;
     }
     return iterator->second;
-}
-
-ArgData* ArgParser::GetArgData(std::string_view name) {
-    return GetArgData(std::string(name));
 }
 
 bool ArgParser::IsValid() const {
@@ -137,7 +133,7 @@ bool ArgParser::IsValid() const {
     return true;
 }
 
-ArgParser::ArgParser(const std::string& name) {
+ArgParser::ArgParser(std::string_view name) {
     this->name = name;
 }
 
@@ -149,27 +145,27 @@ void ArgParser::PushArgument(ArgData* arg_ptr) {
 }
 
 // Built-in types
-ArgBuilder<IntArgument::IntArg, int>& ArgParser::AddIntArgument(const std::string& fullname, const std::string& description) { 
-    return AddArgument<IntArgument::IntArg, int>(fullname, true, description); 
+ArgBuilder<IntArg, int>& ArgParser::AddIntArgument(const std::string& fullname, const std::string& description) { 
+    return AddArgument<IntArg, int>(fullname, true, description); 
 }
 
-ArgBuilder<IntArgument::IntArg, int>& ArgParser::AddIntArgument(char nickname, const std::string& fullname, const std::string& description) { 
+ArgBuilder<IntArg, int>& ArgParser::AddIntArgument(char nickname, const std::string& fullname, const std::string& description) { 
     return AddIntArgument(fullname, description).AddNickname(nickname); 
 }
 
-ArgBuilder<StringArgument::StringArg, std::string>& ArgParser::AddStringArgument(const std::string& fullname, const std::string& description) { 
-    return AddArgument<StringArgument::StringArg, std::string>(fullname, true, description); 
+ArgBuilder<StringArg, std::string>& ArgParser::AddStringArgument(const std::string& fullname, const std::string& description) { 
+    return AddArgument<StringArg, std::string>(fullname, true, description); 
 }
 
-ArgBuilder<StringArgument::StringArg, std::string>& ArgParser::AddStringArgument(char nickname, const std::string& fullname, const std::string& description) { 
+ArgBuilder<StringArg, std::string>& ArgParser::AddStringArgument(char nickname, const std::string& fullname, const std::string& description) { 
     return AddStringArgument(fullname, description).AddNickname(nickname); 
 }
 
-ArgBuilder<BoolArgument::BoolArg, bool>& ArgParser::AddFlag(const std::string& fullname, const std::string& description) { 
-    return AddArgument<BoolArgument::BoolArg, bool>(fullname, false, description).Default(false); 
+ArgBuilder<BoolArg, bool>& ArgParser::AddFlag(const std::string& fullname, const std::string& description) { 
+    return AddArgument<BoolArg, bool>(fullname, false, description).Default(false); 
 }
 
-ArgBuilder<BoolArgument::BoolArg, bool>& ArgParser::AddFlag(char nickname, const std::string& fullname, const std::string& description) { 
+ArgBuilder<BoolArg, bool>& ArgParser::AddFlag(char nickname, const std::string& fullname, const std::string& description) { 
     return AddFlag(fullname, description).AddNickname(nickname); 
 }
 

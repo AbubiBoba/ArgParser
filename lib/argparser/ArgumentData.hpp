@@ -17,9 +17,9 @@ public:
     virtual ~ArgData() = default;
 
     bool has_nickname = false;
-    std::string fullname = "";
+    std::string fullname;
     char nickname = ' ';
-    std::string description = "";
+    std::string description;
 
     bool has_param = false;
     bool was_parsed = false;

@@ -9,7 +9,7 @@
 using namespace ArgumentData;
 using namespace Builder;
 
-class DoubleArg : public Argument<double> {
+class DoubleArg final : public Argument<double> {
 public:
 
     virtual ParseStatus ParseAndSave(std::string_view arg) override {

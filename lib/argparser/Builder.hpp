@@ -10,16 +10,16 @@ namespace Builder {
 
 using namespace ArgumentData;
 
-class IBuilder {
+class IArgumentBuilder {
 public:
-    virtual ~IBuilder() { }
+    virtual ~IArgumentBuilder() { }
     [[nodiscard]] virtual ArgData* Build() = 0;
     virtual const std::string & GetArgumentName() const = 0;
 };
 
 template<class ArgT, typename T>
     requires(std::is_base_of<Argument<T>, ArgT>::value)
-class ArgBuilder : public IBuilder {
+class ArgBuilder : public IArgumentBuilder {
 public:
     ~ArgBuilder() override {
         delete product;

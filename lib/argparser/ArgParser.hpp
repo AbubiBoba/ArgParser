@@ -22,7 +22,7 @@ using namespace ArgumentData;
 
 class ArgParser {
 public:
-    ArgParser(const std::string& id);
+    ArgParser(std::string_view id);
     ArgParser(const ArgParser& other) = delete;
     ArgParser& operator=(const ArgParser& other) = delete;
     ~ArgParser();
@@ -44,7 +44,7 @@ public:
     }
 
     template<class TBuilder>
-        requires(std::is_base_of_v<IBuilder, TBuilder>)
+        requires(std::is_base_of_v<IArgumentBuilder, TBuilder>)
     TBuilder& PushBuilder(TBuilder* builder) {
         builders.push_back(builder);
         return *builder;
@@ -53,7 +53,7 @@ public:
     void PushArgument(ArgData* arg_ptr);
 
     template<typename T>
-    std::optional<T> GetValue(const std::string& name) {
+    std::optional<T> GetValue(std::string_view name) {
         Argument<T>* p_arg = GetArgument<T>(name);
         if (!p_arg || p_arg->is_multivalue) {
             return {};
@@ -62,7 +62,7 @@ public:
     }
 
     template<typename T>
-    std::optional<std::vector<T>> GetValues(const std::string& name) {
+    std::optional<std::vector<T>> GetValues(std::string_view name) {
         Argument<T>* p_arg = GetArgument<T>(name);
         if (!p_arg || !p_arg->is_multivalue) {
             return {};
@@ -71,12 +71,12 @@ public:
     }
 
     // Built-in types
-    ArgBuilder<IntArgument::IntArg, int>& AddIntArgument(const std::string& fullname, const std::string& description = "");
-    ArgBuilder<IntArgument::IntArg, int>& AddIntArgument(char nickname, const std::string& fullname, const std::string& description = "");
-    ArgBuilder<StringArgument::StringArg, std::string>& AddStringArgument(const std::string& fullname, const std::string& description = "");
-    ArgBuilder<StringArgument::StringArg, std::string>& AddStringArgument(char nickname, const std::string& fullname, const std::string& description = "");
-    ArgBuilder<BoolArgument::BoolArg, bool>& AddFlag(const std::string& fullname, const std::string& description = "");
-    ArgBuilder<BoolArgument::BoolArg, bool>& AddFlag(char nickname, const std::string& fullname, const std::string& description = "");
+    ArgBuilder<IntArg, int>& AddIntArgument(const std::string& fullname, const std::string& description = "");
+    ArgBuilder<IntArg, int>& AddIntArgument(char nickname, const std::string& fullname, const std::string& description = "");
+    ArgBuilder<StringArg, std::string>& AddStringArgument(const std::string& fullname, const std::string& description = "");
+    ArgBuilder<StringArg, std::string>& AddStringArgument(char nickname, const std::string& fullname, const std::string& description = "");
+    ArgBuilder<BoolArg, bool>& AddFlag(const std::string& fullname, const std::string& description = "");
+    ArgBuilder<BoolArg, bool>& AddFlag(char nickname, const std::string& fullname, const std::string& description = "");
     void AddHelp(char nickname, const std::string& fullname, const std::string& description = "");
     std::string HelpDescription() const;
     bool Help() const;
@@ -85,15 +85,14 @@ private:
 
     void Build();
     bool IsValid() const;
-    ArgData* GetArgData(const std::string& name);
     ArgData* GetArgData(std::string_view name);
     template<typename T>
-    Argument<T>* GetArgument(const std::string& name) {
+    Argument<T>* GetArgument(std::string_view name) {
         auto iterator = args_data.find(name);
         if (iterator == args_data.end()) {
             return nullptr;
         }
-        Argument<T>* p_arg = dynamic_cast<Argument<T>*>(args_data[name]);
+        Argument<T>* p_arg = dynamic_cast<Argument<T>*>(args_data.find(name)->second);
         return p_arg;
     }
 
@@ -102,11 +101,11 @@ private:
 
     std::string name = "";
     bool asked_for_help = false;
-    BoolArgument::BoolArg* help = nullptr;
+    BoolArg* help = nullptr;
 
-    std::map<std::string, ArgData*> args_data;
+    std::map<std::string, ArgData*, std::less<>> args_data;
     std::vector<ArgData*> positional;
-    std::vector<IBuilder*> builders;
+    std::vector<IArgumentBuilder*> builders;
 };
 
 } // namespace ArgumentParser
