@@ -156,7 +156,7 @@ TEST(ArgParserTestSuite, HelpTest) {
 }
 
 
-TEST(ArgParserTestSuite, NegativePositional) {
+TEST(ArgParserTestSuite, NegativePositionalTest) {
     ArgParser parser("My Parser");
     std::vector<int> values;
     parser.AddIntArgument("Param1").MultiValue(1).Positional().StoreValues(values);
@@ -165,6 +165,21 @@ TEST(ArgParserTestSuite, NegativePositional) {
     ASSERT_EQ(values[0], -1);
     ASSERT_EQ(values[2], -3);
     ASSERT_EQ(values.size(), 5);
+}
+
+
+TEST(ArgParserTestSuite, StrongPositionalTest) {
+    ArgParser parser("My Parser");
+    std::vector<int> values;
+    parser.AddIntArgument('p', "param").MultiValue(1).Positional().StoreValues(values);
+
+    ASSERT_TRUE(parser.Parse(SplitString("app -p -1 -p=-2 0 -0 +0 --param=+3 --param 4 -5 +3")));
+
+    std::vector<int> answer = { -1, -2, 0, 0, 0, 3, 4, -5, 3 };
+    ASSERT_EQ(values.size(), answer.size());
+    for (int i = 0; i < values.size(); ++i) {
+        ASSERT_EQ(values[i], answer[i]);
+    }
 }
 
 
