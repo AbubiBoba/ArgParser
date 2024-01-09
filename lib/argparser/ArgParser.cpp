@@ -201,9 +201,9 @@ std::string ArgParser::HelpDescription() const {
     }
     help_description << std::endl;
 
-    for (const auto& pair_argname_argdata : args_data) {
+    for (const auto& [name, argdata_ptr] : args_data) {
         
-        auto& argdata = *pair_argname_argdata.second;
+        auto& argdata = *argdata_ptr;
         if (argdata.nickname.has_value()) {
             help_description << kShortArgPrefix << argdata.nickname.value() << ',';
         } else { 
