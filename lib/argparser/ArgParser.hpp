@@ -56,7 +56,7 @@ public:
     std::optional<T> GetValue(std::string_view name) {
         Argument<T>* p_arg = GetArgument<T>(name);
         if (!p_arg || p_arg->multivalue_min_count.has_value()) {
-            return {};
+            return std::nullopt;
         }
         return *(p_arg->storage.single);
     }
@@ -65,7 +65,7 @@ public:
     std::optional<std::vector<T>> GetValues(std::string_view name) {
         Argument<T>* p_arg = GetArgument<T>(name);
         if (!p_arg || !p_arg->multivalue_min_count.has_value()) {
-            return {};
+            return std::nullopt;
         }
         return *(p_arg->storage.multi);
     }
@@ -85,6 +85,7 @@ private:
 
     void Build();
     bool IsValid() const;
+    bool ParseAsPositional(std::string_view arg);
     ArgData* GetArgData(std::string_view name);
     template<typename T>
     Argument<T>* GetArgument(std::string_view name) {
@@ -98,6 +99,7 @@ private:
 
     const char kShortArgPrefix = '-';
     const std::string kLongArgPrefix = "--";
+    const std::string kSplitter = "--";
 
     std::string name = "";
     bool asked_for_help = false;

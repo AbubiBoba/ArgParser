@@ -32,9 +32,22 @@ bool ArgParser::Parse(const std::vector<std::string>& argv) {
 
 bool ArgParser::Parse(const std::vector<std::string_view>& argv) {
     Build();
-
+    bool met_splitter = false;
     for (int iterator = 1; iterator < argv.size(); ++iterator) {
         bool parsed = false;
+
+        if (argv[iterator] == kSplitter) {
+            met_splitter = true;
+            continue;
+        }
+
+        if (met_splitter) {
+            if (!ParseAsPositional(argv[iterator])) {
+                return false;
+            } else { 
+                continue;
+            }
+        }
 
         if (argv[iterator].starts_with(kLongArgPrefix)) {
             std::string_view arg_name = argv[iterator].substr(kLongArgPrefix.length());
@@ -69,7 +82,7 @@ bool ArgParser::Parse(const std::vector<std::string_view>& argv) {
 
                 ArgData* argdata = nullptr;
                 for (auto& [name, args_data] : args_data) {
-                    if (args_data->nickname.has_value() && args_data->nickname == arg) {
+                    if (args_data->nickname == arg) {
                         argdata = args_data;
                         break;
                     }
@@ -99,21 +112,23 @@ bool ArgParser::Parse(const std::vector<std::string_view>& argv) {
                 return false;
             }
         } 
-        if (parsed) {
-            continue;
-        }
-        for (ArgData* argdata_ptr : positional) {
-            if (argdata_ptr->ParseAndSave(argv[iterator]) == ParseStatus::kParsedSuccessfully) {
-                parsed = true;
-                break;
-            }
-        }
-        if (!parsed) {
+        
+        if (!parsed && !ParseAsPositional(argv[iterator])) {
             return false;
         }
     }
     
     return asked_for_help || IsValid();
+}
+
+bool ArgParser::ParseAsPositional(std::string_view arg) {
+    for (ArgData* argdata_ptr : positional) {
+        if ((!argdata_ptr->was_parsed || argdata_ptr->multivalue_min_count.has_value()) 
+            && argdata_ptr->ParseAndSave(arg) == ParseStatus::kParsedSuccessfully) {
+            return true;
+        }
+    }
+    return false;
 }
 
 ArgData* ArgParser::GetArgData(std::string_view name) {

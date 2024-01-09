@@ -90,8 +90,7 @@ public:
     virtual void Save(const T& value) {
         if (multivalue_min_count.has_value()) {
             storage.multi->push_back(value);
-        }
-        else {
+        } else {
             *storage.single = value;
         }
     }

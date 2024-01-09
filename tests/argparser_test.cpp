@@ -168,6 +168,23 @@ TEST(ArgParserTestSuite, NegativePositionalTest) {
 }
 
 
+TEST(ArgParserTestSuite, SplitterTest) {
+    ArgParser parser("My Parser");
+    std::vector<std::string> values;
+    parser.AddIntArgument("param").Default(0);
+    parser.AddStringArgument("pos").MultiValue(1).Positional().StoreValues(values);
+
+    ASSERT_TRUE(parser.Parse(SplitString("app some splitter test -- --param=42")));
+
+    ASSERT_TRUE(parser.GetValue<int>("param").has_value());
+    ASSERT_EQ(parser.GetValue<int>("param").value(), 0);
+
+    ASSERT_TRUE(parser.GetValues<std::string>("pos").has_value());
+    ASSERT_EQ(parser.GetValues<std::string>("pos").value().size(), 4);
+    ASSERT_EQ(parser.GetValues<std::string>("pos").value().back(), "--param=42");
+}
+
+
 TEST(ArgParserTestSuite, StrongPositionalTest) {
     ArgParser parser("My Parser");
     std::vector<int> values;
