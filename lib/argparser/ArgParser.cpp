@@ -187,6 +187,7 @@ std::string ArgParser::HelpDescription() const {
     help_description << std::endl;
 
     for (const auto& pair_argname_argdata : args_data) {
+        
         auto& argdata = *pair_argname_argdata.second;
         if (argdata.has_nickname) {
             help_description << kShortArgPrefix << argdata.nickname << ',';
@@ -196,12 +197,7 @@ std::string ArgParser::HelpDescription() const {
         help_description << ' ' << ' ';
         help_description << kLongArgPrefix << argdata.fullname << "=<value>,  ";
         help_description << argdata.description << ' ';
-        if (argdata.has_default) {
-            help_description << "[default] ";
-        }
-        if (argdata.is_multivalue) {
-            help_description << "[repeated, min args = " << argdata.min_count << "] ";
-        }
+        help_description << argdata.Info();
         help_description << std::endl;
     }
 

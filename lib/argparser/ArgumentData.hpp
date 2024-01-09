@@ -1,8 +1,9 @@
 #pragma once
 
-#include <string>
-#include <vector>
 #include <charconv>
+#include <string>
+#include <sstream>
+#include <vector>
 
 namespace ArgumentData {
  
@@ -17,8 +18,8 @@ public:
     virtual ~ArgData() = default;
 
     bool has_nickname = false;
-    std::string fullname;
     char nickname = ' ';
+    std::string fullname;
     std::string description;
 
     bool has_param = false;
@@ -29,13 +30,10 @@ public:
     bool is_multivalue = false;
     int min_count = 0;
 
-    bool has_default = false;
-
-    bool is_owned = true;
-
     virtual size_t GetStorageSize() const = 0;
     virtual ParseStatus ParseAndSave(std::string_view arg) = 0;
     virtual bool Validate() const = 0;
+    virtual std::string Info() = 0;
 };
 
 template<typename T>
@@ -77,8 +75,23 @@ public:
     bool CheckMinCount() const {
         return !is_multivalue || storage.multi->size() >= min_count;
     }
+
+    virtual std::string Info() override {
+        std::stringstream info;
+
+        if (has_default) {
+            info << "[default] ";
+        }
+        if (is_multivalue) {
+            info << "[repeated, min args = " << min_count << "] ";
+        }
+        return info.str();
+    }
     
+    bool has_default = false;
     T default_value{};
+
+    bool is_owned = true;
     union Storage { T* single; std::vector<T>* multi; } storage;
 };
 
