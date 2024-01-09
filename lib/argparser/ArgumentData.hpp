@@ -1,6 +1,7 @@
 #pragma once
 
 #include <charconv>
+#include <optional>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -17,8 +18,7 @@ class ArgData {
 public:
     virtual ~ArgData() = default;
 
-    bool has_nickname = false;
-    char nickname = ' ';
+    std::optional<char> nickname = std::nullopt;
     std::string fullname;
     std::string description;
 
@@ -27,8 +27,7 @@ public:
 
     bool is_positional = false;
 
-    bool is_multivalue = false;
-    int min_count = 0;
+    std::optional<int> multivalue_min_count = std::nullopt;
 
     virtual size_t GetStorageSize() const = 0;
     virtual ParseStatus ParseAndSave(std::string_view arg) = 0;
@@ -52,7 +51,7 @@ public:
 
     void DeleteStorage() {
         if (is_owned) {
-            if (is_multivalue) {
+            if (multivalue_min_count.has_value()) {
                 delete storage.multi;
             } else {
                 delete storage.single;
@@ -61,7 +60,7 @@ public:
     }
 
     size_t GetStorageSize() const override final {
-        return (is_multivalue) ? storage.multi->size() : 1;
+        return (multivalue_min_count.has_value()) ? storage.multi->size() : 1;
     }
 
     virtual bool Validate() const override {
@@ -69,27 +68,26 @@ public:
     }
 
     bool CheckNoDefault() const {
-        return has_default || was_parsed;
+        return default_value.has_value() || was_parsed;
     }
 
     bool CheckMinCount() const {
-        return !is_multivalue || storage.multi->size() >= min_count;
+        return !multivalue_min_count.has_value() || storage.multi->size() >= multivalue_min_count.value();
     }
 
     virtual std::string Info() override {
         std::stringstream info;
 
-        if (has_default) {
+        if (default_value.has_value()) {
             info << "[default] ";
         }
-        if (is_multivalue) {
-            info << "[repeated, min args = " << min_count << "] ";
+        if (multivalue_min_count.has_value()) {
+            info << "[repeated, min args = " << multivalue_min_count.value() << "] ";
         }
         return info.str();
     }
     
-    bool has_default = false;
-    T default_value{};
+    std::optional<T> default_value = std::nullopt;
 
     bool is_owned = true;
     union Storage { T* single; std::vector<T>* multi; } storage;

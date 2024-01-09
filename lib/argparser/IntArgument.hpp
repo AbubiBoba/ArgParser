@@ -16,7 +16,7 @@ class IntArg final : public Argument<int> {
         ss >> value;
         if (ss.eof()) {
             was_parsed = true;
-            if (is_multivalue) {
+            if (multivalue_min_count.has_value()) {
                 storage.multi->push_back(value);
             }
             else {

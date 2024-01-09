@@ -32,17 +32,17 @@ public:
         Reset();
         product->fullname = fullname;
         product->description = description;
-        product->has_nickname = (nickname != ' ');
-        product->nickname = nickname;
+        if (nickname != ' ') {
+            AddNickname(nickname);
+        }
         product->has_param = has_param;
         product->storage.single = new T{};
     }
 
     ArgBuilder<ArgT, T>& MultiValue(size_t min_cnt = 0) {
         product->DeleteStorage();
-        product->is_multivalue = true;
         product->storage.multi = new std::vector<T>;
-        product->min_count = min_cnt;
+        product->multivalue_min_count = min_cnt;
         return *this;
     }
 
@@ -52,9 +52,8 @@ public:
     }
 
     ArgBuilder<ArgT, T>& Default(const T& standard) {
-        if (!product->is_multivalue) {
+        if (!product->multivalue_min_count.has_value()) {
             *product->storage.single = standard;
-            product->has_default = true;
             product->default_value = standard;
         }
         return *this;
@@ -77,7 +76,6 @@ public:
     }
 
     ArgBuilder<ArgT, T>& AddNickname(char nickname) {
-        product->has_nickname = true;
         product->nickname = nickname;
         return *this;
     }

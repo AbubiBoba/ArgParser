@@ -69,7 +69,7 @@ bool ArgParser::Parse(const std::vector<std::string_view>& argv) {
 
                 ArgData* argdata = nullptr;
                 for (auto& [name, args_data] : args_data) {
-                    if (args_data->has_nickname && args_data->nickname == arg) {
+                    if (args_data->nickname.has_value() && args_data->nickname == arg) {
                         argdata = args_data;
                         break;
                     }
@@ -189,8 +189,8 @@ std::string ArgParser::HelpDescription() const {
     for (const auto& pair_argname_argdata : args_data) {
         
         auto& argdata = *pair_argname_argdata.second;
-        if (argdata.has_nickname) {
-            help_description << kShortArgPrefix << argdata.nickname << ',';
+        if (argdata.nickname.has_value()) {
+            help_description << kShortArgPrefix << argdata.nickname.value() << ',';
         } else { 
             help_description << ' ' << ' ' << ' ';
         }
@@ -203,7 +203,7 @@ std::string ArgParser::HelpDescription() const {
 
     help_description << std::endl;
     if (help) {
-        help_description << kShortArgPrefix << help->nickname << ',';
+        help_description << kShortArgPrefix << help->nickname.value() << ',';
         help_description << ' ' << ' ';
         help_description << kLongArgPrefix << help->fullname << ',' << ' ' << ' ';
         help_description << "Display this help and exit";

@@ -55,7 +55,7 @@ public:
     template<typename T>
     std::optional<T> GetValue(std::string_view name) {
         Argument<T>* p_arg = GetArgument<T>(name);
-        if (!p_arg || p_arg->is_multivalue) {
+        if (!p_arg || p_arg->multivalue_min_count.has_value()) {
             return {};
         }
         return *(p_arg->storage.single);
@@ -64,7 +64,7 @@ public:
     template<typename T>
     std::optional<std::vector<T>> GetValues(std::string_view name) {
         Argument<T>* p_arg = GetArgument<T>(name);
-        if (!p_arg || !p_arg->is_multivalue) {
+        if (!p_arg || !p_arg->multivalue_min_count.has_value()) {
             return {};
         }
         return *(p_arg->storage.multi);
