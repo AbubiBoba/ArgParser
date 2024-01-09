@@ -19,12 +19,7 @@ public:
         ss >> value;
         if (ss.eof()) {
             was_parsed = true;
-            if (is_multivalue) {
-                storage.multi->push_back(value);
-            }
-            else {
-                *storage.single = value;
-            }
+            Save(value);
             return ParseStatus::kParsedSuccessfully;
         }
         return ParseStatus::kNotParsed;
