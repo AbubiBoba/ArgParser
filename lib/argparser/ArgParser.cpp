@@ -201,18 +201,16 @@ std::string ArgParser::HelpDescription() const {
     }
     help_description << std::endl;
 
-    for (const auto& [name, argdata_ptr] : args_data) {
-        
-        auto& argdata = *argdata_ptr;
-        if (argdata.nickname.has_value()) {
-            help_description << kShortArgPrefix << argdata.nickname.value() << ',';
+    for (const auto& [name, argdata] : args_data) {
+        if (argdata->nickname.has_value()) {
+            help_description << kShortArgPrefix << argdata->nickname.value() << ',';
         } else { 
             help_description << ' ' << ' ' << ' ';
         }
         help_description << ' ' << ' ';
-        help_description << kLongArgPrefix << argdata.fullname << "=<value>,  ";
-        help_description << argdata.description << ' ';
-        help_description << argdata.Info();
+        help_description << kLongArgPrefix << argdata->fullname << "=<value>,  ";
+        help_description << argdata->description << ' ';
+        help_description << argdata->Info();
         help_description << std::endl;
     }
 
