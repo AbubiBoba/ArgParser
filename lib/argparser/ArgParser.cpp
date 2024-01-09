@@ -51,11 +51,11 @@ bool ArgParser::Parse(const std::vector<std::string_view>& argv) {
             }
 
             if (ArgData* argdata_ptr = GetArgData(arg_name)) {
-                if (argdata_ptr->has_param && is_valid && argdata_ptr->ParseAndSave(arg_value) == ParseStatus::kParsedSuccessfully) {
+                if (argdata_ptr->takes_param && is_valid && argdata_ptr->ParseAndSave(arg_value) == ParseStatus::kParsedSuccessfully) {
                     parsed = true;
                     continue;
                 }
-                if (!argdata_ptr->has_param && argdata_ptr->ParseAndSave("") == ParseStatus::kParsedSuccessfully) {
+                if (!argdata_ptr->takes_param && argdata_ptr->ParseAndSave("") == ParseStatus::kParsedSuccessfully) {
                     parsed = true;
                     continue;
                 }
@@ -77,7 +77,7 @@ bool ArgParser::Parse(const std::vector<std::string_view>& argv) {
 
                 if (!argdata) {
                     break;
-                } else if (argdata->has_param) {
+                } else if (argdata->takes_param) {
                     if (i + 1 < argv[iterator].size() && argv[iterator][i + 1] != '=') {
                         return false;
                     }

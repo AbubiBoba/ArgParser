@@ -17,8 +17,7 @@ public:
     virtual const std::string & GetArgumentName() const = 0;
 };
 
-template<class ArgT, typename T>
-    requires(std::is_base_of<Argument<T>, ArgT>::value)
+template<class ArgT, typename T> requires(std::is_base_of_v<Argument<T>, ArgT>)
 class ArgBuilder : public IArgumentBuilder {
 public:
     ~ArgBuilder() override {
@@ -35,7 +34,7 @@ public:
         if (nickname != ' ') {
             AddNickname(nickname);
         }
-        product->has_param = has_param;
+        product->takes_param = has_param;
         product->storage.single = new T{};
     }
 

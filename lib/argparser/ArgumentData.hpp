@@ -22,7 +22,7 @@ public:
     std::string fullname;
     std::string description;
 
-    bool has_param = false;
+    bool takes_param = false;
     bool was_parsed = false;
 
     bool is_positional = false;
@@ -85,6 +85,15 @@ public:
             info << "[repeated, min args = " << multivalue_min_count.value() << "] ";
         }
         return info.str();
+    }
+
+    virtual void Save(const T& value) {
+        if (multivalue_min_count.has_value()) {
+            storage.multi->push_back(value);
+        }
+        else {
+            *storage.single = value;
+        }
     }
     
     std::optional<T> default_value = std::nullopt;

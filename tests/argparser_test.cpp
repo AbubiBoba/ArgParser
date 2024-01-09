@@ -279,12 +279,7 @@ TEST(ExternalInteractionsArgParserTestSuite, ExterlnalDoubleArgTest) {
             ss >> value;
             if (ss.eof()) {
                 was_parsed = true;
-                if (multivalue_min_count.has_value()) {
-                    storage.multi->push_back(value);
-                }
-                else {
-                    *storage.single = value;
-                }
+                Save(value);
                 return ParseStatus::kParsedSuccessfully;
             }
             return ParseStatus::kNotParsed;
@@ -339,7 +334,7 @@ TEST(ExternalInteractionsArgParserTestSuite, CustomBuilderTest) {
         CustomBuilder(const std::string& fullname) {
             Reset();
             product->fullname = fullname;
-            product->has_param = true;
+            product->takes_param = true;
             product->storage.single = new SizedString;
         }
 
