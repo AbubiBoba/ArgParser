@@ -2,21 +2,7 @@
 
 namespace ArgumentParser {
 
-void ArgParser::Build() {
-    for (auto ptr : builders) {
-        const std::string& name = ptr->GetArgumentName();
-        ArgData* arg_ptr = ptr->Build();
-        args_data[name] = arg_ptr;
-        if (arg_ptr->is_positional) {
-            positional.push_back(arg_ptr);
-        }
-    }
-}
-
 ArgParser::~ArgParser() {
-    for (auto ptr : builders) {
-        delete ptr;
-    }
     for (auto ptr : args_data) {
         delete ptr.second;
     }
@@ -31,7 +17,7 @@ bool ArgParser::Parse(const std::vector<std::string>& argv) {
 }
 
 bool ArgParser::Parse(const std::vector<std::string_view>& argv) {
-    Build();
+    FindPositional();
     bool met_splitter = false;
     for (int iterator = 1; iterator < argv.size(); ++iterator) {
         bool parsed = false;
@@ -139,6 +125,15 @@ ArgData* ArgParser::GetArgData(std::string_view name) {
     return iterator->second;
 }
 
+void ArgParser::FindPositional() {
+    positional.clear();
+    for (auto& [name, arg_ptr] : args_data) {
+        if (arg_ptr->is_positional) {
+            positional.push_back(arg_ptr);
+        }
+    }
+}
+
 bool ArgParser::IsValid() const {
     for (auto& [name, arg] : args_data) {
         if (!arg->Validate()) {
@@ -154,33 +149,30 @@ ArgParser::ArgParser(std::string_view name) {
 
 void ArgParser::PushArgument(ArgData* arg_ptr) {
     args_data[arg_ptr->fullname] = arg_ptr;
-    if (arg_ptr->is_positional) {
-        positional.push_back(arg_ptr);
-    }
 }
 
 // Built-in types
-ArgBuilder<IntArg, int>& ArgParser::AddIntArgument(const std::string& fullname, const std::string& description) { 
+Argument<int>& ArgParser::AddIntArgument(const std::string& fullname, const std::string& description) {
     return AddArgument<IntArg>(fullname, true, description); 
 }
 
-ArgBuilder<IntArg, int>& ArgParser::AddIntArgument(char nickname, const std::string& fullname, const std::string& description) { 
+Argument<int>& ArgParser::AddIntArgument(char nickname, const std::string& fullname, const std::string& description) {
     return AddIntArgument(fullname, description).AddNickname(nickname); 
 }
 
-ArgBuilder<StringArg, std::string>& ArgParser::AddStringArgument(const std::string& fullname, const std::string& description) { 
+Argument<std::string>& ArgParser::AddStringArgument(const std::string& fullname, const std::string& description) {
     return AddArgument<StringArg>(fullname, true, description); 
 }
 
-ArgBuilder<StringArg, std::string>& ArgParser::AddStringArgument(char nickname, const std::string& fullname, const std::string& description) { 
+Argument<std::string>& ArgParser::AddStringArgument(char nickname, const std::string& fullname, const std::string& description) {
     return AddStringArgument(fullname, description).AddNickname(nickname); 
 }
 
-ArgBuilder<BoolArg, bool>& ArgParser::AddFlag(const std::string& fullname, const std::string& description) { 
+Argument<bool>& ArgParser::AddFlag(const std::string& fullname, const std::string& description) {
     return AddArgument<BoolArg>(fullname, false, description).Default(false); 
 }
 
-ArgBuilder<BoolArg, bool>& ArgParser::AddFlag(char nickname, const std::string& fullname, const std::string& description) { 
+Argument<bool>& ArgParser::AddFlag(char nickname, const std::string& fullname, const std::string& description) {
     return AddFlag(fullname, description).AddNickname(nickname); 
 }
 
@@ -208,7 +200,11 @@ std::string ArgParser::HelpDescription() const {
             help_description << ' ' << ' ' << ' ';
         }
         help_description << ' ' << ' ';
-        help_description << kLongArgPrefix << argdata->fullname << "=<value>,  ";
+        help_description << kLongArgPrefix << argdata->fullname;
+        if (argdata->GetTypename() != "") {
+            help_description << "=<" << argdata->GetTypename() << ">";
+        }
+        help_description << ",  ";
         help_description << argdata->description << ' ';
         help_description << argdata->Info();
         help_description << std::endl;

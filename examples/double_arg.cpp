@@ -7,7 +7,6 @@
 #include <lib/argparser/ArgParser.hpp>
 
 using namespace ArgumentData;
-using namespace Builder;
 
 class DoubleArg final : public Argument<double> {
 public:
@@ -19,12 +18,15 @@ public:
         ss >> value;
         if (ss.eof()) {
             was_parsed = true;
-            Save(value);
+            storage.Save(value);
             return ParseStatus::kParsedSuccessfully;
         }
         return ParseStatus::kNotParsed;
     }
 
+    std::string_view GetTypename() const override {
+        return "double";
+    }
 };
 
 int main(int argc, char** argv) {

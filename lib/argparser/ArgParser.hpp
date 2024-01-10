@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ArgumentData.hpp"
-#include "Builder.hpp"
 #include "BoolArgument.hpp"
 #include "IntArgument.hpp"
 #include "StringArgument.hpp"
@@ -18,10 +17,9 @@
 
 namespace ArgumentParser {
 
-using namespace Builder;
 using namespace ArgumentData;
 
-template <class ArgT>
+template <typename ArgT>
 concept IsArgument = requires
 {
     typename ArgT::ValueType;
@@ -39,24 +37,17 @@ public:
     bool Parse(const std::vector<std::string>& argv);
     bool Parse(const std::vector<std::string_view>& argv);
 
-
-
-    template<class ArgT> requires IsArgument<ArgT>
-    ArgBuilder<ArgT, typename ArgT::ValueType>& AddArgument(const std::string& fullname, bool take_param, const std::string& description = "") {
-        ArgBuilder<ArgT, typename ArgT::ValueType>* builder = new ArgBuilder<ArgT, typename ArgT::ValueType>(fullname, description, take_param);
-        return PushBuilder(builder);
+    template<typename ArgT> requires IsArgument<ArgT>
+    Argument<typename ArgT::ValueType>& AddArgument(const std::string& fullname, bool take_param, const std::string& description = "") {
+        ArgT* arg = new ArgT; 
+        arg->Initialize(fullname, description, take_param);
+        PushArgument(arg);
+        return *arg;
     }
 
-    template<class ArgT> requires IsArgument<ArgT>
-    ArgBuilder<ArgT, typename ArgT::ValueType>& AddArgument(char nickname, const std::string& fullname, bool take_param, const std::string& description = "") {
+    template<typename ArgT> requires IsArgument<ArgT>
+    Argument<typename ArgT::ValueType>& AddArgument(char nickname, const std::string& fullname, bool take_param, const std::string& description = "") {
         return AddArgument<ArgT>(fullname, description, take_param).AddNickname(nickname);
-    }
-
-    template<class TBuilder>
-        requires(std::is_base_of_v<IArgumentBuilder, TBuilder>)
-    TBuilder& PushBuilder(TBuilder* builder) {
-        builders.push_back(builder);
-        return *builder;
     }
 
     void PushArgument(ArgData* arg_ptr);
@@ -67,7 +58,7 @@ public:
         if (!p_arg || p_arg->multivalue_min_count.has_value()) {
             return std::nullopt;
         }
-        return *(p_arg->storage.single);
+        return p_arg->storage.GetValue();
     }
 
     template<typename T>
@@ -76,23 +67,23 @@ public:
         if (!p_arg || !p_arg->multivalue_min_count.has_value()) {
             return std::nullopt;
         }
-        return *(p_arg->storage.multi);
+        return p_arg->storage.GetValues();
     }
 
     // Built-in types
-    ArgBuilder<IntArg, int>& AddIntArgument(const std::string& fullname, const std::string& description = "");
-    ArgBuilder<IntArg, int>& AddIntArgument(char nickname, const std::string& fullname, const std::string& description = "");
-    ArgBuilder<StringArg, std::string>& AddStringArgument(const std::string& fullname, const std::string& description = "");
-    ArgBuilder<StringArg, std::string>& AddStringArgument(char nickname, const std::string& fullname, const std::string& description = "");
-    ArgBuilder<BoolArg, bool>& AddFlag(const std::string& fullname, const std::string& description = "");
-    ArgBuilder<BoolArg, bool>& AddFlag(char nickname, const std::string& fullname, const std::string& description = "");
+    Argument<int>& AddIntArgument(const std::string& fullname, const std::string& description = "");
+    Argument<int>& AddIntArgument(char nickname, const std::string& fullname, const std::string& description = "");
+    Argument<std::string>& AddStringArgument(const std::string& fullname, const std::string& description = "");
+    Argument<std::string>& AddStringArgument(char nickname, const std::string& fullname, const std::string& description = "");
+    Argument<bool>& AddFlag(const std::string& fullname, const std::string& description = "");
+    Argument<bool>& AddFlag(char nickname, const std::string& fullname, const std::string& description = "");
     void AddHelp(char nickname, const std::string& fullname, const std::string& description = "");
     std::string HelpDescription() const;
     bool Help() const;
 
 private:
 
-    void Build();
+    void FindPositional();
     bool IsValid() const;
     bool ParseAsPositional(std::string_view arg);
     ArgData* GetArgData(std::string_view name);
@@ -116,7 +107,6 @@ private:
 
     std::map<std::string, ArgData*, std::less<>> args_data;
     std::vector<ArgData*> positional;
-    std::vector<IArgumentBuilder*> builders;
 };
 
 } // namespace ArgumentParser

@@ -4,7 +4,6 @@
 
 namespace ArgumentParser {
 
-using namespace Builder;
 using namespace ArgumentData;
 
 class IntArg final : public Argument<int> {
@@ -15,10 +14,14 @@ class IntArg final : public Argument<int> {
         ss >> value;
         if (ss.eof()) {
             was_parsed = true;
-            Save(value);
+            storage.Save(value);
             return ParseStatus::kParsedSuccessfully;
         }
         return ParseStatus::kNotParsed;
+    }
+
+    std::string_view GetTypename() const override {
+        return "int";
     }
 };
 

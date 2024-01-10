@@ -2,7 +2,6 @@
 
 namespace ArgumentParser {
 
-using namespace Builder;
 using namespace ArgumentData;
 
 class BoolArg final : public Argument<bool> {
@@ -18,13 +17,17 @@ class BoolArg final : public Argument<bool> {
         return ParseStatus::kParsedSuccessfully;
     }
 
-    void Save(const bool& value) override {
+    void Save(bool value) {
         if (multivalue_min_count.has_value()) {
-            storage.multi->push_back(!default_value);
+            storage.Save(value);
         }
         else {
-            *storage.single = !*(storage.single);
+            storage.Save(!storage.GetValue());
         }
+    }
+
+    std::string_view GetTypename() const override {
+        return "";
     }
 };
 

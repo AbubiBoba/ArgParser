@@ -284,7 +284,6 @@ TEST(ArgParserTestSuite, HelpStringTest) {
 
 TEST(ExternalInteractionsArgParserTestSuite, ExterlnalDoubleArgTest) {
     using namespace ArgumentData;
-    using namespace Builder;
 
     class DoubleArg final : public Argument<double> {
     public:
@@ -296,12 +295,15 @@ TEST(ExternalInteractionsArgParserTestSuite, ExterlnalDoubleArgTest) {
             ss >> value;
             if (ss.eof()) {
                 was_parsed = true;
-                Save(value);
+                storage.Save(value);
                 return ParseStatus::kParsedSuccessfully;
             }
             return ParseStatus::kNotParsed;
         }
 
+        std::string_view GetTypename () const override {
+            return "double";
+        }
     };
 
     ArgumentParser::ArgParser parser("Program");
@@ -318,9 +320,8 @@ TEST(ExternalInteractionsArgParserTestSuite, ExterlnalDoubleArgTest) {
 }
 
 
-TEST(ExternalInteractionsArgParserTestSuite, CustomBuilderTest) {
+TEST(ExternalInteractionsArgParserTestSuite, CustomArgExternalPushTest) {
     using namespace ArgumentData;
-    using namespace Builder;
 
     class SizedString {
     public:
@@ -328,70 +329,35 @@ TEST(ExternalInteractionsArgParserTestSuite, CustomBuilderTest) {
         size_t threshold = 1;
     };
 
-    class CustomArg : public Argument<SizedString> {
+    class CustomArg final : public Argument<SizedString> {
     public:
-
         virtual ParseStatus ParseAndSave(std::string_view arg) override {
-            if (arg.size() > storage.single->threshold) {
+            if (arg.size() > storage.GetValue().threshold) {
                 return ParseStatus::kNotParsed;
             }
+            Save(arg);
             was_parsed = true;
-            storage.single->value = arg;
             return ParseStatus::kParsedSuccessfully;
         }
-
-    };
-
-    class CustomBuilder : public IArgumentBuilder {
-    public:
-        ~CustomBuilder() override {
-            delete product;
-        }
-
-        CustomBuilder(const std::string& fullname) {
-            Reset();
-            product->fullname = fullname;
-            product->takes_param = true;
-            product->storage.single = new SizedString;
-        }
-
-        CustomBuilder& SetThreshold(size_t threshold) {
-            product->storage.single->threshold = threshold;
+        CustomArg& SetThreshold(size_t threshold) {
+            storage.GetValue().threshold = threshold;
             return *this;
         }
-
-        [[nodiscard]]
-        ArgData* Build() override {
-            ArgData* to_return = product;
-            Reset();
-            return to_return;
-        }
-
-        virtual const std::string& GetArgumentName() const override {
-            return product->fullname;
-        }
-    private:
-        CustomArg* product = nullptr;
-
-        void Reset() {
-            product = new CustomArg{};
+        void Save(std::string_view value) {
+            storage.GetValue().value = value;
         }
     };
 
-    ArgumentParser::ArgParser parser1("V1");
-    ArgumentParser::ArgParser parser2("V2");
+    ArgumentParser::ArgParser parser("parser");
+    
+    CustomArg* arg = new CustomArg;
+    arg->Initialize("arg", "", true);
+    arg->SetThreshold(5);
+    parser.PushArgument(arg);
 
-    /*  Variant I  */
-    CustomBuilder builder("arg");
-    builder.SetThreshold(5);
-    parser1.PushArgument(builder.Build());
-    ASSERT_TRUE(parser1.Parse(SplitString("app --arg=world")));
-    ASSERT_TRUE(parser1.GetValue<SizedString>("arg").has_value());
-    ASSERT_EQ(parser1.GetValue<SizedString>("arg").value().value, "world");
+    ASSERT_TRUE(parser.Parse(SplitString("app --arg=world")));
+    ASSERT_TRUE(parser.GetValue<SizedString>("arg").has_value());
+    ASSERT_EQ(parser.GetValue<SizedString>("arg").value().value, "world");
 
-    /*  Variant II  */
-     parser2.PushBuilder(new CustomBuilder("arg")).SetThreshold(5);
-    ASSERT_TRUE(parser2.Parse(SplitString("app --arg=world")));
-    ASSERT_TRUE(parser2.GetValue<SizedString>("arg").has_value());
-    ASSERT_EQ(parser2.GetValue<SizedString>("arg").value().value, "world");
 }
+

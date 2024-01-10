@@ -12,9 +12,10 @@ struct Options {
 int main(int argc, char** argv) {
     Options opt;
     std::vector<int> values;
-
-    ArgumentParser::ArgParser parser("Program");
-    parser.AddIntArgument("N").MultiValue(1).Positional().StoreValues(values);
+    using namespace ArgumentParser;
+    ArgParser parser("Program");
+    //parser.AddIntArgument("N").MultiValue(1).Positional().StoreValues(values);
+    parser.AddArgument<IntArg>("N", true).MultiValue(1).Positional().StoreValues(values);
     parser.AddFlag("sum", "add args").StoreValue(opt.sum);
     parser.AddFlag("mult", "multiply args").StoreValue(opt.mult);
     parser.AddHelp('h', "help", "Program accumulate arguments");
