@@ -31,9 +31,9 @@ int main(int argc, char** argv) {
 
     ArgumentParser::ArgParser parser("Program");
 
-    parser.AddArgument<DoubleArg, double>("billion", true);
-    parser.AddArgument<DoubleArg, double>("pi", true);
-    parser.AddArgument<DoubleArg, double>("e", true);
+    parser.AddArgument<DoubleArg>("billion", true);
+    parser.AddArgument<DoubleArg>("pi", true);
+    parser.AddArgument<DoubleArg>("e", true);
 
     if (!parser.Parse(std::vector<std::string_view>{ "app", "--billion=1e9", "--e=2.71", "--pi", "3.14" })) {
         std::cout << "Not parsed";

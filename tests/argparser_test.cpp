@@ -306,9 +306,9 @@ TEST(ExternalInteractionsArgParserTestSuite, ExterlnalDoubleArgTest) {
 
     ArgumentParser::ArgParser parser("Program");
 
-    parser.AddArgument<DoubleArg, double>("billion", true);
-    parser.AddArgument<DoubleArg, double>("pi", true);
-    parser.AddArgument<DoubleArg, double>("e", true);
+    parser.AddArgument<DoubleArg>("billion", true);
+    parser.AddArgument<DoubleArg>("pi", true);
+    parser.AddArgument<DoubleArg>("e", true);
 
     ASSERT_TRUE(parser.Parse(SplitString("app --billion=1e9 --e=2.71 --pi 3.14")));
 

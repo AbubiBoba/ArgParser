@@ -6,6 +6,7 @@
 #include "IntArgument.hpp"
 #include "StringArgument.hpp"
 
+#include <concepts>
 #include <iostream>
 #include <map>
 #include <optional>
@@ -20,6 +21,13 @@ namespace ArgumentParser {
 using namespace Builder;
 using namespace ArgumentData;
 
+template <class ArgT>
+concept IsArgument = requires
+{
+    typename ArgT::ValueType;
+    std::is_base_of_v<Argument<typename ArgT::ValueType>, ArgT>;
+};
+
 class ArgParser {
 public:
     ArgParser(std::string_view id);
@@ -31,16 +39,17 @@ public:
     bool Parse(const std::vector<std::string>& argv);
     bool Parse(const std::vector<std::string_view>& argv);
 
-    template<class ArgT, typename T>
-        requires(std::is_base_of<Argument<T>, ArgT>::value)
-    ArgBuilder<ArgT, T>& AddArgument(const std::string& fullname, bool take_param, const std::string& description = "") {
-        ArgBuilder<ArgT, T>* builder = new ArgBuilder<ArgT, T>(fullname, description, take_param);
+
+
+    template<class ArgT> requires IsArgument<ArgT>
+    ArgBuilder<ArgT, typename ArgT::ValueType>& AddArgument(const std::string& fullname, bool take_param, const std::string& description = "") {
+        ArgBuilder<ArgT, typename ArgT::ValueType>* builder = new ArgBuilder<ArgT, typename ArgT::ValueType>(fullname, description, take_param);
         return PushBuilder(builder);
     }
-    template<class ArgT, typename T>
-        requires(std::is_base_of<Argument<T>, ArgT>::value)
-    ArgBuilder<ArgT, T>& AddArgument(char nickname, const std::string& fullname, bool take_param, const std::string& description = "") {
-        return AddArgument<ArgT, T>(fullname, description, take_param).AddNickname(nickname);
+
+    template<class ArgT> requires IsArgument<ArgT>
+    ArgBuilder<ArgT, typename ArgT::ValueType>& AddArgument(char nickname, const std::string& fullname, bool take_param, const std::string& description = "") {
+        return AddArgument<ArgT>(fullname, description, take_param).AddNickname(nickname);
     }
 
     template<class TBuilder>

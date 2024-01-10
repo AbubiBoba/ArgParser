@@ -161,7 +161,7 @@ void ArgParser::PushArgument(ArgData* arg_ptr) {
 
 // Built-in types
 ArgBuilder<IntArg, int>& ArgParser::AddIntArgument(const std::string& fullname, const std::string& description) { 
-    return AddArgument<IntArg, int>(fullname, true, description); 
+    return AddArgument<IntArg>(fullname, true, description); 
 }
 
 ArgBuilder<IntArg, int>& ArgParser::AddIntArgument(char nickname, const std::string& fullname, const std::string& description) { 
@@ -169,7 +169,7 @@ ArgBuilder<IntArg, int>& ArgParser::AddIntArgument(char nickname, const std::str
 }
 
 ArgBuilder<StringArg, std::string>& ArgParser::AddStringArgument(const std::string& fullname, const std::string& description) { 
-    return AddArgument<StringArg, std::string>(fullname, true, description); 
+    return AddArgument<StringArg>(fullname, true, description); 
 }
 
 ArgBuilder<StringArg, std::string>& ArgParser::AddStringArgument(char nickname, const std::string& fullname, const std::string& description) { 
@@ -177,7 +177,7 @@ ArgBuilder<StringArg, std::string>& ArgParser::AddStringArgument(char nickname, 
 }
 
 ArgBuilder<BoolArg, bool>& ArgParser::AddFlag(const std::string& fullname, const std::string& description) { 
-    return AddArgument<BoolArg, bool>(fullname, false, description).Default(false); 
+    return AddArgument<BoolArg>(fullname, false, description).Default(false); 
 }
 
 ArgBuilder<BoolArg, bool>& ArgParser::AddFlag(char nickname, const std::string& fullname, const std::string& description) { 

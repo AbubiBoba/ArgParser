@@ -12,6 +12,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_subdirectory(lib/argparser)
 add_subdirectory(bin)
+add_subdirectory(examples)
 
 
 enable_testing()

@@ -38,7 +38,7 @@ public:
     CustomBuilder(const std::string& fullname) {
         Reset();
         product->fullname = fullname;
-        product->has_param = true;
+        product->takes_param = true;
         product->storage.single = new SizedString;
     }
 

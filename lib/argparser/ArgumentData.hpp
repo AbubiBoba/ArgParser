@@ -38,7 +38,7 @@ public:
 template<typename T>
 class Argument : public ArgData {
 public:
-
+    using ValueType = T;
     virtual ParseStatus ParseAndSave(std::string_view arg) override = 0;
 
     virtual ~Argument() override {
