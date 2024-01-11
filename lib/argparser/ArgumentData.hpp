@@ -114,6 +114,9 @@ template<typename T>
 class Argument : public ArgData {
 public:
     using ValueType = T;
+
+    Storage<T> storage;
+
     virtual ParseStatus ParseAndSave(std::string_view arg) override = 0;
 
     virtual ~Argument() override { }
@@ -165,9 +168,6 @@ public:
         this->nickname = nickname;
         return *this;
     }
-
-
-    Storage<T> storage;
 
     virtual bool Validate() const override {
         return CheckNoDefault() && CheckMinCount();

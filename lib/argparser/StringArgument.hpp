@@ -6,7 +6,7 @@ namespace ArgumentParser {
 
 using namespace ArgumentData;
 
-class StringArg final : public Argument <std::string> {
+class StringArg final : public Argument<std::string> {
     ParseStatus ParseAndSave(std::string_view arg) override {
 
         was_parsed = true;

@@ -42,7 +42,7 @@ bool ArgParser::Parse(const std::vector<std::string_view>& argv) {
             size_t equal_sign_pos = arg_name.find('=');
             if (equal_sign_pos == std::string_view::npos) {
                 is_valid = iterator + 1 < argv.size();
-                arg_value = is_valid ? argv[++iterator] : std::string_view{};
+                arg_value = is_valid ? argv[++iterator] : std::string_view();
             } else {
                 arg_value = arg_name.substr(equal_sign_pos + 1);
                 arg_name = arg_name.substr(0, equal_sign_pos);

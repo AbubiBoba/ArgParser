@@ -358,6 +358,5 @@ TEST(ExternalInteractionsArgParserTestSuite, CustomArgExternalPushTest) {
     ASSERT_TRUE(parser.Parse(SplitString("app --arg=world")));
     ASSERT_TRUE(parser.GetValue<SizedString>("arg").has_value());
     ASSERT_EQ(parser.GetValue<SizedString>("arg").value().value, "world");
-
 }
 
