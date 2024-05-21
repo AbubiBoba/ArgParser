@@ -170,7 +170,7 @@ public:
     }
 
     virtual bool Validate() const override {
-        return CheckNoDefault() && CheckMinCount();
+        return CheckNoDefault() || CheckMinCount(); // <fixed>-[prev-version]: return CheckNoDefault() && CheckMinCount();
     }
 
     virtual std::string Info() const override {
